@@ -4,7 +4,6 @@ CortexMesh — CLI tool (cortexctl).
 Complete CLI for administering CortexMesh clusters.
 All commands connect to a running controller for cluster operations.
 """
-
 from __future__ import annotations
 
 import json
@@ -150,7 +149,7 @@ def status(
         raise typer.Exit(1)
 
 
-# ── Node commands ────────────────────────────────────────────────-
+# ── Node commands ─────────────────────────────────────────────────
 
 node_app = typer.Typer(help="Node management")
 app.add_typer(node_app, name="node")
@@ -467,7 +466,29 @@ def profile_list(
 ):
     """List profiles."""
     url = _get_controller(controller)
-    typer.echo("Profile listing not yet implemented.")
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.get(f"{url}/api/v1/profiles")
+            if resp.status_code == 200:
+                profiles = resp.json()
+                if not profiles:
+                    typer.echo("No profiles configured.")
+                    return
+                typer.echo(f"{'PROFILE_ID':<38} {'NAME':<20} {'PRIORITY':<12} {'CPU%':<8} {'MEM%':<8}")
+                typer.echo("-" * 90)
+                for p in profiles:
+                    cpu = p.get("cpu_limit_percent", "-")
+                    mem = p.get("memory_limit_percent", "-")
+                    cpu_str = f"{cpu}%" if cpu is not None else "-"
+                    mem_str = f"{mem}%" if mem is not None else "-"
+                    typer.echo(
+                        f"{p['profile_id']:<38} {p.get('name', '-'):<20} {p.get('priority', '-'):<12} {cpu_str:<8} {mem_str:<8}"
+                    )
+            else:
+                typer.echo("Profile listing not available.")
+    except httpx.ConnectError:
+        typer.echo(f"Cannot connect to controller at {url}", err=True)
+        raise typer.Exit(1)
 
 
 @profile_app.command("apply")
@@ -510,6 +531,168 @@ def event_list(
             typer.echo(
                 f"{ts:<30} {e.get('event_type', ''):<25} {e.get('message', '')}"
             )
+    except httpx.ConnectError:
+        typer.echo(f"Cannot connect to controller at {url}", err=True)
+        raise typer.Exit(1)
+
+
+# ── Metrics command ───────────────────────────────────────────────
+
+
+@app.command()
+def metrics(
+    controller: str = typer.Option(None, "--controller", "-c"),
+    metric_type: str = typer.Option(None, "--type", help="Filter by metric type"),
+    window: int = typer.Option(300, "--window", help="Time window in seconds"),
+):
+    """Show cluster metrics."""
+    url = _get_controller(controller)
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            params = {"window_seconds": window}
+            if metric_type:
+                params["metric_type"] = metric_type
+            resp = client.get(f"{url}/api/v1/cluster/metrics/summary", params=params)
+        data = resp.json()
+        if not data:
+            typer.echo("No metrics data available.")
+            return
+        
+        if metric_type and isinstance(data, dict):
+            typer.echo(f"Metrics: {metric_type} (last {window}s)")
+            typer.echo("-" * 60)
+            for node_id, summary in data.items():
+                if isinstance(summary, dict):
+                    typer.echo(f"  Node: {node_id[:12]}...")
+                    typer.echo(f"    Avg: {summary.get('avg', 'N/A')}")
+                    typer.echo(f"    Max: {summary.get('max', 'N/A')}")
+                    typer.echo(f"    Latest: {summary.get('latest', 'N/A')}")
+        else:
+            typer.echo("Cluster Metrics Summary")
+            typer.echo("-" * 40)
+            for mtype, nodes in data.items():
+                typer.echo(f"\n  {mtype}:")
+                for node_id, summary in nodes.items():
+                    if isinstance(summary, dict):
+                        avg = summary.get('avg', 'N/A')
+                        typer.echo(f"    {node_id[:12]}...: avg={avg}")
+    except httpx.ConnectError:
+        typer.echo(f"Cannot connect to controller at {url}", err=True)
+        raise typer.Exit(1)
+
+
+# ── Alerts command ────────────────────────────────────────────────
+
+alert_app = typer.Typer(help="Alert management")
+app.add_typer(alert_app, name="alert")
+
+
+@alert_app.command("list")
+def alert_list(
+    severity: str = typer.Option(None, "--severity", help="Filter by severity (info,warning,critical,emergency)"),
+    controller: str = typer.Option(None, "--controller", "-c"),
+):
+    """List active cluster alerts."""
+    url = _get_controller(controller)
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            params = {}
+            if severity:
+                params["severity"] = severity
+            alerts = client.get(f"{url}/api/v1/cluster/alerts", params=params).json()
+        if not alerts:
+            typer.echo("No alerts.")
+            return
+        typer.echo(f"{'ALERT_ID':<38} {'SEVERITY':<12} {'TITLE':<30} {'NODE'}")
+        typer.echo("-" * 95)
+        for a in alerts:
+            typer.echo(
+                f"{a['alert_id']:<38} {a.get('severity', ''):<12} {a.get('title', '')[:28]:<30} {a.get('node_id', '-')[:12]}"
+            )
+    except httpx.ConnectError:
+        typer.echo(f"Cannot connect to controller at {url}", err=True)
+        raise typer.Exit(1)
+
+
+@alert_app.command("ack")
+def alert_ack(
+    alert_id: str = typer.Argument(..., help="Alert ID"),
+    controller: str = typer.Option(None, "--controller", "-c"),
+):
+    """Acknowledge an alert."""
+    url = _get_controller(controller)
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.post(f"{url}/api/v1/alerts/{alert_id}/acknowledge")
+        data = resp.json()
+        typer.echo(f"Alert acknowledged: {data.get('title', alert_id)}")
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            typer.echo(f"Alert {alert_id} not found", err=True)
+        else:
+            typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+    except httpx.ConnectError:
+        typer.echo(f"Cannot connect to controller at {url}", err=True)
+        raise typer.Exit(1)
+
+
+@alert_app.command("resolve")
+def alert_resolve(
+    alert_id: str = typer.Argument(..., help="Alert ID"),
+    controller: str = typer.Option(None, "--controller", "-c"),
+):
+    """Resolve an alert."""
+    url = _get_controller(controller)
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.post(f"{url}/api/v1/alerts/{alert_id}/resolve")
+        data = resp.json()
+        typer.echo(f"Alert resolved: {data.get('title', alert_id)}")
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            typer.echo(f"Alert {alert_id} not found", err=True)
+        else:
+            typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+    except httpx.ConnectError:
+        typer.echo(f"Cannot connect to controller at {url}", err=True)
+        raise typer.Exit(1)
+
+
+# ── Diagnostics command ───────────────────────────────────────────
+
+
+@app.command()
+def diagnostics(
+    controller: str = typer.Option(None, "--controller", "-c"),
+):
+    """Run cluster diagnostics."""
+    url = _get_controller(controller)
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            cluster_health = client.get(f"{url}/api/v1/cluster/health").json()
+            alerts = client.get(f"{url}/api/v1/cluster/alerts").json()
+        
+        typer.echo("CortexMesh Cluster Diagnostics")
+        typer.echo("=" * 50)
+        typer.echo(f"Controller: {url}")
+        typer.echo(f"Status: {cluster_health.get('status', 'unknown')}")
+        typer.echo(f"Total Nodes: {cluster_health.get('total_nodes', 0)}")
+        typer.echo(f"Online Nodes: {cluster_health.get('online_nodes', 0)}")
+        typer.echo(f"Offline Nodes: {cluster_health.get('offline_nodes', 0)}")
+        typer.echo(f"Active Alerts: {cluster_health.get('active_alerts', 0)}")
+        typer.echo(f"Critical Alerts: {cluster_health.get('critical_alerts', 0)}")
+        
+        if alerts:
+            typer.echo("\nActive Alerts:")
+            typer.echo("-" * 40)
+            for a in alerts[:10]:
+                severity = a.get("severity", "info").upper()
+                typer.echo(f"  [{severity}] {a.get('title', 'Unknown')}")
+                typer.echo(f"    {a.get('message', '')}")
+        else:
+            typer.echo("\nNo active alerts. Cluster is healthy.")
     except httpx.ConnectError:
         typer.echo(f"Cannot connect to controller at {url}", err=True)
         raise typer.Exit(1)

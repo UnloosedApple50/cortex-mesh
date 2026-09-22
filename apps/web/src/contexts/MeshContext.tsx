@@ -8,6 +8,11 @@ export interface Node {
   cpu_usage: number
   memory_usage: number
   disk_usage: number
+  gpu_usage: number
+  gpu_model: string
+  gpu_memory: number
+  os: string
+  roles: string[]
   uptime: string
   last_heartbeat: string
   labels: Record<string, string>
@@ -16,12 +21,16 @@ export interface Node {
 export interface Task {
   id: string
   name: string
-  status: 'pending' | 'running' | 'completed' | 'failed'
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
   node_id: string
   created_at: string
   updated_at: string
   progress: number
   type: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  cpu_usage: number
+  memory_mb: number
+  duration: string
 }
 
 export interface StorageInfo {
@@ -32,6 +41,7 @@ export interface StorageInfo {
   used_gb: number
   status: 'healthy' | 'warning' | 'critical'
   mount_point: string
+  iops: number
 }
 
 export interface Provider {
@@ -42,6 +52,8 @@ export interface Provider {
   endpoint: string
   last_check: string
   metadata: Record<string, string>
+  model_count: number
+  response_time_ms: number
 }
 
 export interface EventItem {
@@ -54,6 +66,14 @@ export interface EventItem {
   acknowledged: boolean
 }
 
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp: string
+  tokens?: number
+}
+
 export interface ClusterStats {
   total_nodes: number
   online_nodes: number
@@ -63,6 +83,9 @@ export interface ClusterStats {
   storage_total_gb: number
   active_providers: number
   unread_events: number
+  avg_cpu: number
+  avg_memory: number
+  avg_gpu: number
 }
 
 export interface WebSocketMessage {
@@ -79,7 +102,9 @@ interface MeshContextType {
   providers: Provider[]
   events: EventItem[]
   stats: ClusterStats
+  chatHistory: ChatMessage[]
   sendMessage: (msg: any) => void
+  sendChatMessage: (content: string) => void
 }
 
 const defaultStats: ClusterStats = {
@@ -91,6 +116,9 @@ const defaultStats: ClusterStats = {
   storage_total_gb: 0,
   active_providers: 0,
   unread_events: 0,
+  avg_cpu: 0,
+  avg_memory: 0,
+  avg_gpu: 0,
 }
 
 const MeshContext = createContext<MeshContextType>({
@@ -101,7 +129,9 @@ const MeshContext = createContext<MeshContextType>({
   providers: [],
   events: [],
   stats: defaultStats,
+  chatHistory: [],
   sendMessage: () => {},
+  sendChatMessage: () => {},
 })
 
 export function MeshProvider({ children }: { children: ReactNode }) {
@@ -112,6 +142,7 @@ export function MeshProvider({ children }: { children: ReactNode }) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [events, setEvents] = useState<EventItem[]>([])
   const [stats, setStats] = useState<ClusterStats>(defaultStats)
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const reconnectAttempts = useRef<number>(0)
@@ -260,6 +291,51 @@ export function MeshProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const sendChatMessage = useCallback(async (content: string) => {
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content,
+      timestamp: new Date().toISOString(),
+    }
+    setChatHistory(prev => [...prev, userMsg])
+
+    try {
+      const res = await fetch('/api/v1/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content, history: chatHistory }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: data.response || data.message || 'Response received',
+          timestamp: new Date().toISOString(),
+          tokens: data.tokens,
+        }
+        setChatHistory(prev => [...prev, assistantMsg])
+      } else {
+        const errorMsg: ChatMessage = {
+          id: `error-${Date.now()}`,
+          role: 'system',
+          content: 'Failed to get response from AI. Please check your provider configuration.',
+          timestamp: new Date().toISOString(),
+        }
+        setChatHistory(prev => [...prev, errorMsg])
+      }
+    } catch {
+      const errorMsg: ChatMessage = {
+        id: `error-${Date.now()}`,
+        role: 'system',
+        content: 'Connection error. Is the CortexMesh API running?',
+        timestamp: new Date().toISOString(),
+      }
+      setChatHistory(prev => [...prev, errorMsg])
+    }
+  }, [chatHistory])
+
   useEffect(() => {
     connect()
     return () => {
@@ -269,7 +345,7 @@ export function MeshProvider({ children }: { children: ReactNode }) {
   }, [connect])
 
   return (
-    <MeshContext.Provider value={{ connected, nodes, tasks, storage, providers, events, stats, sendMessage }}>
+    <MeshContext.Provider value={{ connected, nodes, tasks, storage, providers, events, stats, chatHistory, sendMessage, sendChatMessage }}>
       {children}
     </MeshContext.Provider>
   )

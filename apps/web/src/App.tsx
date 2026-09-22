@@ -7,6 +7,7 @@ import Storage from './pages/Storage'
 import Providers from './pages/Providers'
 import Events from './pages/Events'
 import Settings from './pages/Settings'
+import Chat from './pages/Chat'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/providers" element={<Providers />} />
         <Route path="/events" element={<Events />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/chat" element={<Chat />} />
       </Route>
     </Routes>
   )

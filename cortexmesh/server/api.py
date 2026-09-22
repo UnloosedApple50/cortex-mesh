@@ -1,16 +1,19 @@
 """
 CortexMesh — FastAPI Controller API with profiles, policies, and leases.
 """
-
 from __future__ import annotations
 
+import asyncio
+import json
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+
+from contextlib import asynccontextmanager
 
 import os
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,10 +21,13 @@ from fastapi.staticfiles import StaticFiles
 from cortexmesh.core.leases import LeaseManager, LeaseState
 from cortexmesh.core.policies import PolicyEngine, PolicyRule, PolicyType, PolicyAction
 from cortexmesh.core.profiles import ProfileManager, ResourceProfile
+from cortexmesh.monitor.metrics import MetricsCollector, MetricType, MetricSample
+from cortexmesh.monitor.health import HealthMonitor, HealthCheckConfig, AlertSeverity, AlertStatus
+from cortexmesh.server.models import ModelManager, ModelState
 from cortexmesh.database import (
     AuditLogModel, EnrollmentTokenModel, EventModel, NodeModel,
     PolicyModel, ProviderModel, ResourceLeaseModel, StorageLocationModel,
-    TaskModel, async_session, init_db,
+    TaskModel, async_session, init_db, engine, Base,
 )
 from cortexmesh.models import (
     EnrollmentToken, ErrorResponse, Event, EventType,
@@ -31,10 +37,87 @@ from cortexmesh.models import (
     TaskSubmit, VersionResponse,
 )
 
+
+# ── Application state ──────────────────────────────────────────────
+
+class ConnectionManager:
+    """Manages WebSocket connections for real-time event broadcasting."""
+    
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+    
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+    
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+    
+    async def broadcast(self, message: Dict[str, Any]):
+        """Broadcast a message to all connected clients."""
+        disconnected = []
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                disconnected.append(connection)
+        for conn in disconnected:
+            self.disconnect(conn)
+    
+    async def broadcast_event(self, event_type: str, data: Dict[str, Any]):
+        """Broadcast a typed event."""
+        await self.broadcast({
+            "type": event_type,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "data": data,
+        })
+
+
+# ── Singleton managers ──────────────────────────────────────────
+
+conn_manager = ConnectionManager()
+lease_manager = LeaseManager()
+policy_engine = PolicyEngine()
+profile_manager = ProfileManager()
+metrics_collector = MetricsCollector()
+health_monitor = HealthMonitor(metrics_collector, HealthCheckConfig())
+model_manager = ModelManager()
+
+# Load default policies
+for rule in policy_engine.get_default_policies():
+    policy_engine.add_rule(rule)
+
+# Register health alert callback to broadcast via WebSocket
+def on_health_alert(alert):
+    """Callback when a health alert is created."""
+    asyncio.get_event_loop().create_task(
+        conn_manager.broadcast_event("alert", alert.to_dict())
+    )
+
+health_monitor.on_alert(on_health_alert)
+
+
+# ── Application lifespan ─────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application startup and shutdown events."""
+    # Startup: initialize database
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    # Shutdown: cleanup
+    await engine.dispose()
+
+
+# ── FastAPI app ──────────────────────────────────────────────────
+
 app = FastAPI(
     title="CortexMesh",
     description="Universal Platform for Multi-Machine Orchestration",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -45,18 +128,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Singleton managers ──────────────────────────────────────────
 
-lease_manager = LeaseManager()
-policy_engine = PolicyEngine()
-profile_manager = ProfileManager()
-
-# Load default policies
-for rule in policy_engine.get_default_policies():
-    policy_engine.add_rule(rule)
-
-
-# ── Health ───────────────────────────────────────────────────────
+# ── Health ──────────────────────────────────────────────────────
 
 @app.get("/api/v1/health", response_model=HealthResponse)
 async def health_check():
@@ -66,6 +139,53 @@ async def health_check():
 @app.get("/api/v1/version", response_model=VersionResponse)
 async def version():
     return VersionResponse()
+
+
+# ── Cluster Health ──────────────────────────────────────────────
+
+@app.get("/api/v1/cluster/health")
+async def cluster_health():
+    """Get overall cluster health including active alerts."""
+    return health_monitor.get_cluster_health()
+
+
+@app.get("/api/v1/cluster/metrics/summary")
+async def cluster_metrics_summary(
+    metric_type: Optional[str] = Query(None, description="Filter by metric type"),
+    window_seconds: int = Query(300, description="Time window in seconds"),
+):
+    """Get aggregated metrics across all nodes."""
+    if metric_type:
+        try:
+            mt = MetricType(metric_type)
+            summaries = metrics_collector.get_cluster_summary(mt, window_seconds)
+            return {nid: s.to_dict() for nid, s in summaries.items()}
+        except ValueError:
+            raise HTTPException(400, f"Unknown metric type: {metric_type}")
+    
+    # Return all metric types
+    result = {}
+    for mt in MetricType:
+        summaries = metrics_collector.get_cluster_summary(mt, window_seconds)
+        if summaries:
+            result[mt.value] = {nid: s.to_dict() for nid, s in summaries.items()}
+    return result
+
+
+@app.get("/api/v1/cluster/alerts")
+async def cluster_alerts(
+    severity: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+):
+    """Get cluster alerts."""
+    alerts = health_monitor.get_all_alerts(
+        status=AlertStatus(status) if status else None,
+        limit=limit,
+    )
+    if severity:
+        alerts = [a for a in alerts if a.severity == AlertSeverity(severity)]
+    return [a.to_dict() for a in alerts]
 
 
 # ── Nodes ────────────────────────────────────────────────────────
@@ -188,6 +308,23 @@ async def register_node(req: NodeRegisterRequest):
             vram_bytes=max((g.vram_bytes or 0) for g in caps.gpus) if caps.gpus else 0,
         )
 
+        # Record node in health monitor
+        health_monitor.record_node_heartbeat(node_id)
+
+        # Broadcast node registration event
+        await conn_manager.broadcast_event("node_registered", {
+            "node_id": node_id,
+            "hostname": req.hostname,
+            "platform": req.platform.value,
+        })
+
+        # Discover models from node capabilities
+        node_data = {
+            "node_id": node_id,
+            "capabilities": req.capabilities.model_dump(),
+        }
+        model_manager.discover_models_from_nodes([node_data])
+
         return NodeResponse(
             node_id=node.id,
             hostname=node.hostname,
@@ -214,18 +351,34 @@ async def node_heartbeat(node_id: str, body: Optional[dict] = None):
         node.state = NodeState.ONLINE.value
         
         # Update metrics if provided
+        metrics_data = {}
         if body:
-            # Store metrics in capabilities JSON for now
-            caps = node.capabilities or {}
-            caps["last_metrics"] = {
+            metrics_data = {
                 "cpu_usage_percent": body.get("cpu_usage_percent"),
                 "memory_usage_percent": body.get("memory_usage_percent"),
                 "gpu_usage_percent": body.get("gpu_usage_percent"),
                 "timestamp": body.get("timestamp"),
             }
+            # Store metrics in capabilities JSON for now
+            caps = node.capabilities or {}
+            caps["last_metrics"] = metrics_data
             node.capabilities = caps
+            
+            # Record metrics in metrics collector
+            metrics_collector.record_heartbeat_metrics(node_id, metrics_data)
+            
+            # Update health monitor
+            health_monitor.record_node_heartbeat(node_id)
         
         await session.commit()
+        
+        # Broadcast heartbeat event
+        await conn_manager.broadcast_event("node_heartbeat", {
+            "node_id": node_id,
+            "state": "online",
+            "metrics": metrics_data,
+        })
+        
         return {"status": "ok"}
 
 
@@ -239,6 +392,13 @@ async def update_capabilities(node_id: str, body: dict):
         node.capabilities = body
         node.updated_at = datetime.now(timezone.utc)
         await session.commit()
+        
+        # Re-discover models
+        model_manager.discover_models_from_nodes([{"node_id": node_id, "capabilities": body}])
+        
+        await conn_manager.broadcast_event("node_capabilities_updated", {
+            "node_id": node_id,
+        })
         return {"status": "ok"}
 
 
@@ -254,6 +414,11 @@ async def update_node(node_id: str, body: dict):
         if "state" in body:
             node.state = body["state"]
         await session.commit()
+        
+        await conn_manager.broadcast_event("node_updated", {
+            "node_id": node_id,
+            "changes": body,
+        })
         return {"status": "ok", "node_id": node_id}
 
 
@@ -265,7 +430,46 @@ async def delete_node(node_id: str):
             raise HTTPException(404, "Node not found")
         await session.delete(node)
         await session.commit()
+        
+        # Clean up metrics and health
+        metrics_collector.clear_node(node_id)
+        
+        await conn_manager.broadcast_event("node_deleted", {
+            "node_id": node_id,
+        })
         return SuccessResponse(message="Node deleted")
+
+
+@app.get("/api/v1/nodes/{node_id}/health")
+async def node_health(node_id: str):
+    """Get detailed health status for a node."""
+    health = health_monitor.get_node_health(node_id)
+    if health.get("state") == "unknown":
+        raise HTTPException(404, "Node not found")
+    return health
+
+
+@app.get("/api/v1/nodes/{node_id}/metrics")
+async def node_metrics(
+    node_id: str,
+    metric_type: Optional[str] = None,
+    limit: int = 100,
+):
+    """Get metrics history for a node."""
+    if metric_type:
+        try:
+            mt = MetricType(metric_type)
+            samples = metrics_collector.get_history(node_id, mt, limit=limit)
+            return [s.to_dict() for s in samples]
+        except ValueError:
+            raise HTTPException(400, f"Unknown metric type: {metric_type}")
+    
+    result = {}
+    for mt in MetricType:
+        samples = metrics_collector.get_history(node_id, mt, limit=limit)
+        if samples:
+            result[mt.value] = [s.to_dict() for s in samples]
+    return result
 
 
 # ── Tasks ────────────────────────────────────────────────────────
@@ -333,6 +537,13 @@ async def submit_task(task: TaskSubmit):
 
         await session.commit()
 
+        # Broadcast task submission
+        await conn_manager.broadcast_event("task_queued", {
+            "task_id": task_id,
+            "title": task.title,
+            "task_type": task.task_type.value,
+        })
+
         return TaskResponse(
             task_id=db_task.id,
             task_type=db_task.task_type,
@@ -385,6 +596,12 @@ async def cancel_task(task_id: str):
         # Release any leases for this task
         lease_manager.release_task_leases(task_id)
         
+        # Broadcast cancellation
+        await conn_manager.broadcast_event("task_cancelled", {
+            "task_id": task_id,
+            "title": task.title,
+        })
+        
         return SuccessResponse(message="Cancellation requested")
 
 
@@ -400,6 +617,7 @@ async def list_profiles():
 async def create_profile(body: dict):
     """Create a new resource profile."""
     profile = profile_manager.create_profile(**body)
+    await conn_manager.broadcast_event("profile_created", profile.to_dict())
     return profile.to_dict()
 
 
@@ -418,6 +636,7 @@ async def update_profile(profile_id: str, body: dict):
     profile = profile_manager.update_profile(profile_id, **body)
     if not profile:
         raise HTTPException(404, "Profile not found")
+    await conn_manager.broadcast_event("profile_updated", profile.to_dict())
     return profile.to_dict()
 
 
@@ -427,6 +646,7 @@ async def delete_profile(profile_id: str):
     result = profile_manager.delete_profile(profile_id)
     if not result:
         raise HTTPException(404, "Profile not found")
+    await conn_manager.broadcast_event("profile_deleted", {"profile_id": profile_id})
     return SuccessResponse(message="Profile deleted")
 
 
@@ -453,6 +673,7 @@ async def create_policy(body: dict):
         enabled=body.get("enabled", True),
     )
     policy_engine.add_rule(rule)
+    await conn_manager.broadcast_event("policy_changed", rule.to_dict())
     return rule.to_dict()
 
 
@@ -471,10 +692,11 @@ async def delete_policy(policy_id: str):
     result = policy_engine.remove_rule(policy_id)
     if not result:
         raise HTTPException(404, "Policy not found")
+    await conn_manager.broadcast_event("policy_deleted", {"policy_id": policy_id})
     return SuccessResponse(message="Policy deleted")
 
 
-# ── Leases ───────────────────────────────────────────────────────
+# ── Leases ──────────────────────────────────────────────────────
 
 @app.get("/api/v1/leases")
 async def list_leases(node_id: Optional[str] = None, task_id: Optional[str] = None):
@@ -589,7 +811,7 @@ async def list_storage():
         ]
 
 
-# ── Events ───────────────────────────────────────────────────────
+# ── Events ──────────────────────────────────────────────────────
 
 @app.get("/api/v1/events", response_model=List[Event])
 async def list_events(limit: int = 100):
@@ -613,17 +835,216 @@ async def list_events(limit: int = 100):
         ]
 
 
+# ── Model Management ──────────────────────────────────────────────
+
+@app.get("/api/v1/models")
+async def list_models(
+    provider_type: Optional[str] = None,
+    state: Optional[str] = None,
+    requires_gpu: Optional[bool] = None,
+):
+    """List managed models."""
+    state_enum = ModelState(state) if state else None
+    models = model_manager.list_models(
+        provider_type=provider_type,
+        state=state_enum,
+        requires_gpu=requires_gpu,
+    )
+    return [m.to_dict() for m in models]
+
+
+@app.get("/api/v1/models/stats")
+async def model_stats():
+    """Get model management statistics."""
+    return model_manager.get_stats()
+
+
+@app.get("/api/v1/models/{model_id}")
+async def get_model(model_id: str):
+    """Get model details."""
+    model = model_manager.get_model(model_id)
+    if not model:
+        raise HTTPException(404, "Model not found")
+    return model.to_dict()
+
+
+@app.post("/api/v1/models")
+async def register_model(body: dict):
+    """Register a new model."""
+    model = model_manager.register_model(
+        name=body.get("name", ""),
+        provider_type=body.get("provider_type", "ollama"),
+        endpoint=body.get("endpoint"),
+        size_bytes=body.get("size_bytes", 0),
+        context_length=body.get("context_length", 4096),
+        requires_gpu=body.get("requires_gpu", False),
+        vram_gb=body.get("vram_gb", 0.0),
+        metadata=body.get("metadata", {}),
+    )
+    await conn_manager.broadcast_event("model_registered", model.to_dict())
+    return model.to_dict()
+
+
+@app.post("/api/v1/models/{model_id}/stage")
+async def stage_model(model_id: str, body: dict):
+    """Stage a model on specified nodes."""
+    node_ids = body.get("node_ids", [])
+    model = model_manager.stage_model(model_id, node_ids)
+    if not model:
+        raise HTTPException(404, "Model not found")
+    await conn_manager.broadcast_event("model_staged", model.to_dict())
+    return model.to_dict()
+
+
+@app.post("/api/v1/models/{model_id}/sync")
+async def sync_model(model_id: str, body: dict):
+    """Sync a model to target nodes."""
+    source_node_id = body.get("source_node_id", "")
+    target_node_ids = body.get("target_node_ids", [])
+    model = model_manager.sync_model(model_id, source_node_id, target_node_ids)
+    if not model:
+        raise HTTPException(404, "Model not found")
+    await conn_manager.broadcast_event("model_syncing", model.to_dict())
+    return model.to_dict()
+
+
+@app.post("/api/v1/models/{model_id}/available")
+async def mark_model_available(model_id: str, body: dict):
+    """Mark a model as available on a node."""
+    node_id = body.get("node_id", "")
+    model = model_manager.mark_model_available(model_id, node_id)
+    if not model:
+        raise HTTPException(404, "Model not found")
+    return model.to_dict()
+
+
+@app.delete("/api/v1/models/{model_id}")
+async def delete_model(model_id: str):
+    """Delete a model from tracking."""
+    result = model_manager.delete_model(model_id)
+    if not result:
+        raise HTTPException(404, "Model not found")
+    await conn_manager.broadcast_event("model_deleted", {"model_id": model_id})
+    return SuccessResponse(message="Model deleted")
+
+
+
+
+@app.get("/api/v1/nodes/{node_id}/models")
+async def get_node_models(node_id: str):
+    """Get models available on a specific node."""
+    models = model_manager.get_models_on_node(node_id)
+    return [m.to_dict() for m in models]
+
+
+# ── Alerts ──────────────────────────────────────────────────────
+
+@app.post("/api/v1/alerts/{alert_id}/acknowledge")
+async def acknowledge_alert(alert_id: str, body: Optional[dict] = None):
+    """Acknowledge an alert."""
+    by = body.get("acknowledged_by", "operator") if body else "operator"
+    alert = health_monitor.acknowledge_alert(alert_id, by)
+    if not alert:
+        raise HTTPException(404, "Alert not found or not active")
+    return alert.to_dict()
+
+
+@app.post("/api/v1/alerts/{alert_id}/resolve")
+async def resolve_alert(alert_id: str):
+    """Resolve an alert."""
+    alert = health_monitor.resolve_alert(alert_id)
+    if not alert:
+        raise HTTPException(404, "Alert not found")
+    return alert.to_dict()
+
+
 # ── WebSocket ────────────────────────────────────────────────────
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
+    """
+    WebSocket endpoint for real-time event streaming.
+    
+    Clients receive:
+    - node_registered, node_updated, node_deleted, node_heartbeat
+    - task_queued, task_cancelled
+    - profile_created, profile_updated, profile_deleted
+    - policy_changed, policy_deleted
+    - model_registered, model_staged, model_syncing, model_deleted
+    - alert (health alerts)
+    
+    Clients can also send JSON messages to subscribe to specific events.
+    """
+    await conn_manager.connect(websocket)
+    
+    # Send initial connection confirmation
+    await websocket.send_json({
+        "type": "connected",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "data": {"message": "Connected to CortexMesh event stream"},
+    })
+    
     try:
         while True:
             data = await websocket.receive_text()
-            await websocket.send_json({"echo": data, "timestamp": datetime.now(timezone.utc).isoformat()})
+            try:
+                msg = json.loads(data)
+                msg_type = msg.get("type", "")
+                
+                if msg_type == "ping":
+                    await websocket.send_json({
+                        "type": "pong",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+                elif msg_type == "subscribe":
+                    # Acknowledge subscription
+                    await websocket.send_json({
+                        "type": "subscribed",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "data": {"channels": msg.get("channels", [])},
+                    })
+                elif msg_type == "get_health":
+                    health = health_monitor.get_cluster_health()
+                    await websocket.send_json({
+                        "type": "cluster_health",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "data": health,
+                    })
+                elif msg_type == "get_metrics":
+                    metric_type_str = msg.get("metric_type")
+                    if metric_type_str:
+                        try:
+                            mt = MetricType(metric_type_str)
+                            summaries = metrics_collector.get_cluster_summary(mt)
+                            await websocket.send_json({
+                                "type": "metrics",
+                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                                "data": {nid: s.to_dict() for nid, s in summaries.items()},
+                            })
+                        except ValueError:
+                            await websocket.send_json({
+                                "type": "error",
+                                "data": {"message": f"Unknown metric type: {metric_type_str}"},
+                            })
+                    else:
+                        await websocket.send_json({
+                            "type": "error",
+                            "data": {"message": "metric_type required"},
+                        })
+                else:
+                    await websocket.send_json({
+                        "type": "echo",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "data": msg,
+                    })
+            except json.JSONDecodeError:
+                await websocket.send_json({
+                    "type": "echo",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "data": data,
+                })
     except WebSocketDisconnect:
-        pass
+        conn_manager.disconnect(websocket)
 
 
 # ── Enrollment ───────────────────────────────────────────────────
@@ -658,6 +1079,9 @@ if os.path.isdir(WEB_DIST):
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
+        # Don't serve SPA for API routes — let them 404 naturally
+        if full_path.startswith("api/"):
+            raise HTTPException(404, "API endpoint not found")
         file_path = os.path.join(WEB_DIST, full_path)
         if os.path.isfile(file_path):
             return FileResponse(file_path)

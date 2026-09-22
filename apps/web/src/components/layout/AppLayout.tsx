@@ -17,6 +17,7 @@ import {
   Moon,
   Wifi,
   WifiOff,
+  MessageSquare,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/storage', label: 'Storage', icon: HardDrive },
   { path: '/providers', label: 'Providers', icon: Cloud },
   { path: '/events', label: 'Events', icon: Bell },
+  { path: '/chat', label: 'AI Chat', icon: MessageSquare },
   { path: '/settings', label: 'Settings', icon: Settings },
 ]
 
