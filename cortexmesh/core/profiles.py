@@ -1,5 +1,5 @@
 """
-HermesMesh — Profiles and policies system.
+CortexMesh — Profiles and policies system.
 
 Profiles define resource limits and scheduling preferences for nodes.
 Policies define how resources are managed (hard limits, soft limits, monitoring only).

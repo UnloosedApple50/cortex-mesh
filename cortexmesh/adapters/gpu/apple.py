@@ -1,5 +1,5 @@
 """
-HermesMesh — Apple Silicon GPU adapter using ioreg and Metal.
+CortexMesh — Apple Silicon GPU adapter using ioreg and Metal.
 """
 
 from __future__ import annotations
@@ -8,7 +8,7 @@ import platform
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hermesmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
+from cortexmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
 
 
 class AppleGPUAdapter(GPUAdapter):

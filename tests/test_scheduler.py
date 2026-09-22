@@ -1,11 +1,11 @@
 """
-Tests for HermesMesh scheduler.
+Tests for CortexMesh scheduler.
 """
 
 import pytest
 from datetime import datetime
-from hermesmesh.core.scheduler import CapabilityScorer, Scheduler
-from hermesmesh.models import (
+from cortexmesh.core.scheduler import CapabilityScorer, Scheduler
+from cortexmesh.models import (
     Architecture, CPUCapability, GPUCapability, GPUVendor,
     MemoryCapability, NodeCapabilities, NodeResponse, NodeRole,
     NodeState, Platform, TaskPriority, TaskRequirements, TaskSubmit,

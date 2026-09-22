@@ -1,11 +1,11 @@
-# HermesMesh Development Guide
+# CortexMesh Development Guide
 
 ## Getting Started
 
 ```bash
 # Clone the repository
-git clone https://github.com/hermesmesh/hermesmesh.git
-cd hermesmesh
+git clone https://github.com/cortexmesh/cortexmesh.git
+cd cortexmesh
 
 # Create virtual environment
 python -m venv venv
@@ -18,10 +18,10 @@ pip install -e ".[dev]"
 ## Project Structure
 
 ```
-hermesmesh/
-├── hermesmesh/
+cortexmesh/
+├── cortexmesh/
 │   ├── __init__.py
-│   ├── cli/           # CLI tool (hermesctl)
+│   ├── cli/           # CLI tool (cortexctl)
 │   │   └── __init__.py
 │   ├── core/          # Core logic
 │   │   ├── __init__.py
@@ -53,7 +53,7 @@ hermesmesh/
 pytest
 
 # Run with coverage
-pytest --cov=hermesmesh --cov-report=html
+pytest --cov=cortexmesh --cov-report=html
 
 # Run specific test file
 pytest tests/test_scheduler.py
@@ -71,26 +71,26 @@ We use:
 
 ```bash
 # Format code
-black hermesmesh tests
+black cortexmesh tests
 
 # Lint
-ruff check hermesmesh tests
+ruff check cortexmesh tests
 
 # Type check
-mypy hermesmesh
+mypy cortexmesh
 ```
 
 ## Adding a New CLI Command
 
-1. Add the command function in `hermesmesh/cli/__init__.py`
+1. Add the command function in `cortexmesh/cli/__init__.py`
 2. Add tests in `tests/test_cli.py`
 3. Update documentation in `docs/api.md`
 
 ## Adding a New API Endpoint
 
-1. Add the endpoint in `hermesmesh/server/api.py`
-2. Add Pydantic models in `hermesmesh/models/__init__.py`
-3. Add database models in `hermesmesh/database.py` if needed
+1. Add the endpoint in `cortexmesh/server/api.py`
+2. Add Pydantic models in `cortexmesh/models/__init__.py`
+3. Add database models in `cortexmesh/database.py` if needed
 4. Add tests in `tests/test_api.py`
 
 ## Database Migrations

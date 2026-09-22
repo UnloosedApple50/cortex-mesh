@@ -1,5 +1,5 @@
 """
-HermesMesh — AMD GPU adapter using ROCm and lspci.
+CortexMesh — AMD GPU adapter using ROCm and lspci.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import shutil
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hermesmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
+from cortexmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
 
 
 class AMDGPUAdapter(GPUAdapter):

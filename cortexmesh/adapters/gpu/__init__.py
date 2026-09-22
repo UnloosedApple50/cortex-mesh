@@ -1,5 +1,5 @@
 """
-HermesMesh — GPU adapters package.
+CortexMesh — GPU adapters package.
 
 Provides unified GPU detection and monitoring across vendors.
 """
@@ -9,12 +9,12 @@ from __future__ import annotations
 import platform
 from typing import Any, Dict, List, Optional
 
-from hermesmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
-from hermesmesh.adapters.gpu.nvidia import NvidiaGPUAdapter
-from hermesmesh.adapters.gpu.amd import AMDGPUAdapter
-from hermesmesh.adapters.gpu.intel import IntelGPUAdapter
-from hermesmesh.adapters.gpu.apple import AppleGPUAdapter
-from hermesmesh.adapters.gpu.generic import GenericGPUAdapter
+from cortexmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
+from cortexmesh.adapters.gpu.nvidia import NvidiaGPUAdapter
+from cortexmesh.adapters.gpu.amd import AMDGPUAdapter
+from cortexmesh.adapters.gpu.intel import IntelGPUAdapter
+from cortexmesh.adapters.gpu.apple import AppleGPUAdapter
+from cortexmesh.adapters.gpu.generic import GenericGPUAdapter
 
 
 def get_gpu_adapters() -> List[GPUAdapter]:

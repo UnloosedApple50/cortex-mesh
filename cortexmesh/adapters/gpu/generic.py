@@ -1,5 +1,5 @@
 """
-HermesMesh — Generic fallback GPU adapter.
+CortexMesh — Generic fallback GPU adapter.
 
 Used when no vendor-specific adapter is available.
 Tries basic system commands to detect any GPU.
@@ -12,7 +12,7 @@ import shutil
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hermesmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
+from cortexmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
 
 
 class GenericGPUAdapter(GPUAdapter):

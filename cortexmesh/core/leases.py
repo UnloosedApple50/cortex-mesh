@@ -1,5 +1,5 @@
 """
-HermesMesh — Resource Lease System.
+CortexMesh — Resource Lease System.
 
 Manages CPU, memory, and VRAM reservations for tasks.
 Leases are tracked in the database and released when tasks complete.

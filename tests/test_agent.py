@@ -1,13 +1,13 @@
 """
-Tests for HermesMesh Agent.
+Tests for CortexMesh Agent.
 """
 
 import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from hermesmesh.agent.agent import Agent
-from hermesmesh.models import (
+from cortexmesh.agent.agent import Agent
+from cortexmesh.models import (
     Architecture,
     CPUCapability,
     MemoryCapability,
@@ -65,8 +65,8 @@ class TestAgent:
         assert isinstance(hostname, str)
         assert len(hostname) > 0
 
-    @patch("hermesmesh.agent.agent.detect_all_capabilities")
-    @patch("hermesmesh.agent.agent.detect_platform")
+    @patch("cortexmesh.agent.agent.detect_all_capabilities")
+    @patch("cortexmesh.agent.agent.detect_platform")
     @pytest.mark.asyncio
     async def test_agent_initial_state(
         self, mock_detect_platform, mock_detect_caps
@@ -137,7 +137,7 @@ class TestAgent:
 class TestAgentCapabilities:
     def test_agent_uses_detected_capabilities(self):
         """Test that agent properly uses detected capabilities."""
-        with patch("hermesmesh.agent.agent.detect_all_capabilities") as mock_caps:
+        with patch("cortexmesh.agent.agent.detect_all_capabilities") as mock_caps:
             mock_caps.return_value = {
                 "cpu": CPUCapability(threads=16),
                 "memory": MemoryCapability(total_bytes=32 * 1024**3),

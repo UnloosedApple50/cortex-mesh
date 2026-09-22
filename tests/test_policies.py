@@ -1,10 +1,10 @@
 """
-Tests for HermesMesh policies system.
+Tests for CortexMesh policies system.
 """
 
 import pytest
 
-from hermesmesh.core.policies import (
+from cortexmesh.core.policies import (
     PolicyAction, PolicyCheckResult, PolicyEngine, PolicyRule, PolicyType
 )
 

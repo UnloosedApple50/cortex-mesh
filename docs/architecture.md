@@ -1,8 +1,8 @@
-# HermesMesh Architecture
+# CortexMesh Architecture
 
 ## Overview
 
-HermesMesh transforms multiple independent computers into a logical cluster.
+CortexMesh transforms multiple independent computers into a logical cluster.
 
 The system separates **Control Plane** from **Data Plane**:
 

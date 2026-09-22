@@ -1,5 +1,5 @@
 """
-HermesMesh — Shared type contracts and Pydantic models.
+CortexMesh — Shared type contracts and Pydantic models.
 
 All components (controller, agent, web, desktop) import from here
 to ensure consistent data structures.

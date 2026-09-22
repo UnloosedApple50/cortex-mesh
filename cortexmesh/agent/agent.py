@@ -1,5 +1,5 @@
 """
-HermesMesh — Enhanced Agent with reconnection, capability refresh, and metric reporting.
+CortexMesh — Enhanced Agent with reconnection, capability refresh, and metric reporting.
 """
 
 from __future__ import annotations
@@ -13,9 +13,9 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-from hermesmesh.adapters.platform.detect import detect_all_capabilities, detect_platform
-from hermesmesh.adapters.gpu import get_all_metrics, detect_all_gpus
-from hermesmesh.models import (
+from cortexmesh.adapters.platform.detect import detect_all_capabilities, detect_platform
+from cortexmesh.adapters.gpu import get_all_metrics, detect_all_gpus
+from cortexmesh.models import (
     Architecture, NodeRegisterRequest, NodeRole, Platform,
     NodeCapabilities, CPUCapability, MemoryCapability,
 )
@@ -23,7 +23,7 @@ from hermesmesh.models import (
 
 class Agent:
     """
-    HermesMesh Agent runs on each node.
+    CortexMesh Agent runs on each node.
 
     Responsibilities:
     - Detect hardware capabilities
@@ -125,7 +125,7 @@ class Agent:
         # Enhance with GPU adapter data
         try:
             gpu_caps = detect_all_gpus()
-            from hermesmesh.models import GPUCapability, GPUVendor
+            from cortexmesh.models import GPUCapability, GPUVendor
             for gc in gpu_caps:
                 vendor_map = {
                     "nvidia": GPUVendor.NVIDIA,

@@ -1,11 +1,11 @@
 """
-Tests for HermesMesh profiles system.
+Tests for CortexMesh profiles system.
 """
 
 import pytest
 from datetime import datetime, timezone
 
-from hermesmesh.core.profiles import ProfileManager, ResourceProfile
+from cortexmesh.core.profiles import ProfileManager, ResourceProfile
 
 
 class TestResourceProfile:

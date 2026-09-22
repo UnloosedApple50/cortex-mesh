@@ -1,7 +1,7 @@
 """
-HermesMesh — CLI tool (hermesctl).
+CortexMesh — CLI tool (cortexctl).
 
-Complete CLI for administering HermesMesh clusters.
+Complete CLI for administering CortexMesh clusters.
 All commands connect to a running controller for cluster operations.
 """
 
@@ -16,10 +16,10 @@ import httpx
 import typer
 import uvicorn
 
-from hermesmesh.models import NodeState, Platform, Architecture
+from cortexmesh.models import NodeState, Platform, Architecture
 
 app = typer.Typer(
-    help="HermesMesh — Universal Multi-Machine Orchestration",
+    help="CortexMesh — Universal Multi-Machine Orchestration",
     no_args_is_help=True,
 )
 
@@ -31,18 +31,18 @@ def controller(
     host: str = typer.Option("0.0.0.0", "--host"),
     port: int = typer.Option(8000, "--port"),
     db: str = typer.Option(
-        "sqlite+aiosqlite:///./hermesmesh.db", "--db"
+        "sqlite+aiosqlite:///./cortexmesh.db", "--db"
     ),
 ):
-    """Start the HermesMesh Controller."""
+    """Start the CortexMesh Controller."""
     os.environ["DATABASE_URL"] = db
-    from hermesmesh.database import init_db
+    from cortexmesh.database import init_db
 
     import asyncio
 
     asyncio.get_event_loop().run_until_complete(init_db())
     uvicorn.run(
-        "hermesmesh.server.api:app", host=host, port=port, reload=False
+        "cortexmesh.server.api:app", host=host, port=port, reload=False
     )
 
 
@@ -55,8 +55,8 @@ def agent(
     enrollment_token: str = typer.Option(..., "--token", "-t"),
     node_name: str = typer.Option(None, "--name"),
 ):
-    """Start the HermesMesh Agent."""
-    from hermesmesh.agent.agent import Agent
+    """Start the CortexMesh Agent."""
+    from cortexmesh.agent.agent import Agent
     import asyncio
 
     agent_inst = Agent(
@@ -73,10 +73,10 @@ def agent(
 @app.command()
 def doctor():
     """Run diagnostics."""
-    from hermesmesh.adapters.platform.detect import detect_all_capabilities
+    from cortexmesh.adapters.platform.detect import detect_all_capabilities
 
     caps = detect_all_capabilities()
-    typer.echo("HermesMesh Diagnostic")
+    typer.echo("CortexMesh Diagnostic")
     typer.echo("=" * 40)
     typer.echo(f"Platform: {caps['cpu'].architecture}")
     typer.echo(
@@ -100,7 +100,7 @@ def doctor():
 @app.command()
 def version():
     """Show version."""
-    typer.echo("HermesMesh v0.1.0")
+    typer.echo("CortexMesh v0.1.0")
 
 
 # ── Helper ────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ def status(
         running = sum(1 for t in tasks if t.get("state") == "running")
         queued = sum(1 for t in tasks if t.get("state") == "queued")
 
-        typer.echo("HermesMesh Cluster Status")
+        typer.echo("CortexMesh Cluster Status")
         typer.echo("=" * 40)
         typer.echo(f"Controller: {url}")
         typer.echo(f"Health: {health.get('status', 'unknown')}")
@@ -524,15 +524,15 @@ app.add_typer(config_app, name="config")
 @config_app.command("show")
 def config_show():
     """Show current configuration."""
-    typer.echo("HermesMesh Configuration")
+    typer.echo("CortexMesh Configuration")
     typer.echo("=" * 40)
     typer.echo(
         f"Controller URL: {os.environ.get('HERMESMESH_CONTROLLER', 'not set')}"
     )
     typer.echo(
-        f"Database URL: {os.environ.get('DATABASE_URL', 'sqlite+aiosqlite:///./hermesmesh.db')}"
+        f"Database URL: {os.environ.get('DATABASE_URL', 'sqlite+aiosqlite:///./cortexmesh.db')}"
     )
-    typer.echo(f"Config dir: ~/.hermesmesh/")
+    typer.echo(f"Config dir: ~/.cortexmesh/")
 
 
 @config_app.command("set")

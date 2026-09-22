@@ -1,16 +1,16 @@
 """
-Tests for HermesMesh GPU adapters.
+Tests for CortexMesh GPU adapters.
 """
 
 import pytest
 from unittest.mock import patch, MagicMock
 
-from hermesmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
-from hermesmesh.adapters.gpu.nvidia import NvidiaGPUAdapter
-from hermesmesh.adapters.gpu.amd import AMDGPUAdapter
-from hermesmesh.adapters.gpu.intel import IntelGPUAdapter
-from hermesmesh.adapters.gpu.apple import AppleGPUAdapter
-from hermesmesh.adapters.gpu.generic import GenericGPUAdapter
+from cortexmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
+from cortexmesh.adapters.gpu.nvidia import NvidiaGPUAdapter
+from cortexmesh.adapters.gpu.amd import AMDGPUAdapter
+from cortexmesh.adapters.gpu.intel import IntelGPUAdapter
+from cortexmesh.adapters.gpu.apple import AppleGPUAdapter
+from cortexmesh.adapters.gpu.generic import GenericGPUAdapter
 
 
 class TestGPUCapabilities:
@@ -78,7 +78,7 @@ class TestNvidiaGPUAdapter:
         assert "adapter" in caps
         assert "available" in caps
 
-    @patch("hermesmesh.adapters.gpu.nvidia.shutil.which")
+    @patch("cortexmesh.adapters.gpu.nvidia.shutil.which")
     def test_detect_smi_parsing(self, mock_which):
         """Test nvidia-smi output parsing."""
         mock_which.return_value = "/usr/bin/nvidia-smi"
@@ -88,7 +88,7 @@ class TestNvidiaGPUAdapter:
         adapter._nvml_available = False
         
         mock_output = "0, NVIDIA GeForce RTX 4060, 8192, GPU-abc123, 12345, 0000:01:00.0\n"
-        with patch("hermesmesh.adapters.gpu.base.subprocess.run") as mock_run:
+        with patch("cortexmesh.adapters.gpu.base.subprocess.run") as mock_run:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stdout = mock_output
@@ -100,7 +100,7 @@ class TestNvidiaGPUAdapter:
             assert gpus[0].vram_bytes == 8192 * 1024 * 1024
             assert gpus[0].uuid == "GPU-abc123"
 
-    @patch("hermesmesh.adapters.gpu.nvidia.shutil.which")
+    @patch("cortexmesh.adapters.gpu.nvidia.shutil.which")
     def test_metrics_smi_parsing(self, mock_which):
         """Test nvidia-smi metrics parsing."""
         mock_which.return_value = "/usr/bin/nvidia-smi"
@@ -109,7 +109,7 @@ class TestNvidiaGPUAdapter:
         adapter._nvml_available = False
         
         mock_output = "0, NVIDIA GeForce RTX 4060, 45.5, 4096, 8192, 4096, 65.0, 120.0, 70, 2505, 7000\n"
-        with patch("hermesmesh.adapters.gpu.base.subprocess.run") as mock_run:
+        with patch("cortexmesh.adapters.gpu.base.subprocess.run") as mock_run:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stdout = mock_output

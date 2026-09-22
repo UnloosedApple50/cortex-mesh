@@ -1,13 +1,13 @@
 """
-Tests for HermesMesh platform detection.
+Tests for CortexMesh platform detection.
 """
 
 import pytest
-from hermesmesh.adapters.platform.detect import (
+from cortexmesh.adapters.platform.detect import (
     CPUAdapter, MemoryAdapter, GPUAdapter, StorageAdapter,
     NetworkAdapter, detect_platform, detect_all_capabilities,
 )
-from hermesmesh.models import Platform, Architecture
+from cortexmesh.models import Platform, Architecture
 
 
 class TestPlatformDetection:

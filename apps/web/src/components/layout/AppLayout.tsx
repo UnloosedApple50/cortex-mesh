@@ -58,7 +58,7 @@ export default function AppLayout() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-mesh-primary to-mesh-secondary flex items-center justify-center">
               <Server className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-white">HermesMesh</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white">CortexMesh</span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}

@@ -1,4 +1,4 @@
-# HermesMesh API Reference
+# CortexMesh API Reference
 
 ## Base URL
 

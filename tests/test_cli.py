@@ -1,5 +1,5 @@
 """
-Tests for HermesMesh CLI (hermesctl).
+Tests for CortexMesh CLI (cortexctl).
 """
 
 import os
@@ -7,7 +7,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
 
-from hermesmesh.cli import app
+from cortexmesh.cli import app
 
 
 runner = CliRunner()
@@ -17,12 +17,12 @@ class TestCLI:
     def test_version(self):
         result = runner.invoke(app, ["version"])
         assert result.exit_code == 0
-        assert "HermesMesh v0.1.0" in result.output
+        assert "CortexMesh v0.1.0" in result.output
 
     def test_doctor(self):
         result = runner.invoke(app, ["doctor"])
         assert result.exit_code == 0
-        assert "HermesMesh Diagnostic" in result.output
+        assert "CortexMesh Diagnostic" in result.output
         assert "Platform:" in result.output
         assert "CPU:" in result.output
         assert "Memory:" in result.output
@@ -489,7 +489,7 @@ class TestCLI:
     def test_help_output(self):
         result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "HermesMesh" in result.output
+        assert "CortexMesh" in result.output
 
     def test_version_help(self):
         result = runner.invoke(app, ["version", "--help"])

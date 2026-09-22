@@ -1,5 +1,5 @@
 """
-HermesMesh — Policies system.
+CortexMesh — Policies system.
 
 Policies define resource management strategies:
 - HARD: Strict enforcement, tasks rejected if limit exceeded

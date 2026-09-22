@@ -1,5 +1,5 @@
 """
-HermesMesh — Intel GPU adapter using Level Zero and lspci.
+CortexMesh — Intel GPU adapter using Level Zero and lspci.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hermesmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
+from cortexmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
 
 
 class IntelGPUAdapter(GPUAdapter):

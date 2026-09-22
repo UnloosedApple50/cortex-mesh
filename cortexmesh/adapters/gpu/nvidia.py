@@ -1,5 +1,5 @@
 """
-HermesMesh — NVIDIA GPU adapter using NVML (pynvml) and nvidia-smi fallback.
+CortexMesh — NVIDIA GPU adapter using NVML (pynvml) and nvidia-smi fallback.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hermesmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
+from cortexmesh.adapters.gpu.base import GPUAdapter, GPUCapabilities, GPUMetrics
 
 
 class NvidiaGPUAdapter(GPUAdapter):

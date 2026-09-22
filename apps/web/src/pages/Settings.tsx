@@ -11,7 +11,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
-    localStorage.setItem('hermes-mesh-settings', JSON.stringify({
+    localStorage.setItem('cortex-mesh-settings', JSON.stringify({
       apiUrl,
       wsUrl,
       refreshInterval,
@@ -26,7 +26,7 @@ export default function Settings() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Configure your HermesMesh dashboard
+          Configure your CortexMesh dashboard
         </p>
       </div>
 

@@ -1,8 +1,8 @@
-# HermesMesh Security
+# CortexMesh Security
 
 ## Security Model
 
-HermesMesh follows a defense-in-depth approach:
+CortexMesh follows a defense-in-depth approach:
 
 1. **Enrollment Tokens** — Single-use, time-limited tokens for node registration
 2. **Transport Security** — TLS for all communications
@@ -41,7 +41,7 @@ Always use TLS in production:
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
 
 # Run with TLS
-uvicorn hermesmesh.server.api:app --ssl-certfile cert.pem --ssl-keyfile key.pem
+uvicorn cortexmesh.server.api:app --ssl-certfile cert.pem --ssl-keyfile key.pem
 ```
 
 ## Network Security
@@ -75,7 +75,7 @@ Every administrative action is recorded:
 
 If you discover a security vulnerability, please report it privately:
 
-1. Email: security@hermesmesh.dev
+1. Email: security@cortexmesh.dev
 2. Do NOT open a public issue
 3. Allow 48 hours for initial response
 

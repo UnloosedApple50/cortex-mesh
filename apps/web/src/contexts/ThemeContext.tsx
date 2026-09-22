@@ -14,14 +14,14 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem('hermes-mesh-theme')
+    const stored = localStorage.getItem('cortex-mesh-theme')
     if (stored === 'light' || stored === 'dark') return stored
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
-    localStorage.setItem('hermes-mesh-theme', theme)
+    localStorage.setItem('cortex-mesh-theme', theme)
   }, [theme])
 
   const toggleTheme = useCallback(() => {

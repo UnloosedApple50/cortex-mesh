@@ -1,4 +1,4 @@
-# HermesMesh
+# CortexMesh
 
 **Universal Platform for Multi-Machine Orchestration**
 
@@ -18,20 +18,20 @@ Treat a cluster as **a set of independent machines with different capabilities, 
 - ✅ **Agent** — Hardware detection, registration, heartbeat
 - ✅ **Scheduler** — Capability-based scoring and task placement
 - ✅ **Database** — SQLAlchemy async with SQLite/PostgreSQL support
-- ✅ **CLI** — Complete `hermesctl` tool with 19+ commands
+- ✅ **CLI** — Complete `cortexctl` tool with 19+ commands
 - ✅ **Tests** — Comprehensive test coverage (scheduler, API, agent, CLI)
 - ✅ **CI/CD** — GitHub Actions workflow (lint, type check, tests)
 - ✅ **Documentation** — Full docs covering installation, usage, security, troubleshooting
 
 ## Architecture
 
-HermesMesh follows a **Capability-Driven Architecture**:
+CortexMesh follows a **Capability-Driven Architecture**:
 
 - **Controller** — Brain: API, scheduler, authentication, registry
 - **Agent** — Runs on each node: detects capabilities, reports health
 - **Scheduler** — Capability-based scoring and task placement
 - **Adapters** — Abstract hardware/OS differences
-- **CLI** — Administration tool (`hermesctl`)
+- **CLI** — Administration tool (`cortexctl`)
 
 ## Principles
 
@@ -45,47 +45,47 @@ HermesMesh follows a **Capability-Driven Architecture**:
 
 ```bash
 # Install
-pip install hermesmesh
+pip install cortexmesh
 
 # Start Controller
-hermesctl controller --host 0.0.0.0 --port 8000
+cortexctl controller --host 0.0.0.0 --port 8000
 
 # Generate enrollment token
 curl -X POST http://localhost:8000/api/v1/enrollment/create
 
 # Start Agent (on each node)
-hermesctl agent --controller http://localhost:8000 --token <token>
+cortexctl agent --controller http://localhost:8000 --token <token>
 
 # Check status
-hermesctl status --controller http://localhost:8000
+cortexctl status --controller http://localhost:8000
 ```
 
 ## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `hermesctl controller` | Start the controller |
-| `hermesctl agent` | Start an agent |
-| `hermesctl doctor` | Run diagnostics |
-| `hermesctl status` | Show cluster status |
-| `hermesctl version` | Show version |
-| `hermesctl node list` | List all nodes |
-| `hermesctl node info <id>` | Show node details |
-| `hermesctl node enable <id>` | Enable a node |
-| `hermesctl node disable <id>` | Disable a node |
-| `hermesctl task list` | List tasks |
-| `hermesctl task submit` | Submit a task |
-| `hermesctl task cancel <id>` | Cancel a task |
-| `hermesctl model list` | List available models |
-| `hermesctl provider list` | List providers |
-| `hermesctl provider test <id>` | Test provider |
-| `hermesctl storage list` | List storage locations |
-| `hermesctl profile list` | List profiles |
-| `hermesctl profile apply <name>` | Apply a profile |
-| `hermesctl event list` | List recent events |
-| `hermesctl config show` | Show configuration |
-| `hermesctl config set <key> <value>` | Set configuration |
-| `hermesctl logs` | Show recent logs |
+| `cortexctl controller` | Start the controller |
+| `cortexctl agent` | Start an agent |
+| `cortexctl doctor` | Run diagnostics |
+| `cortexctl status` | Show cluster status |
+| `cortexctl version` | Show version |
+| `cortexctl node list` | List all nodes |
+| `cortexctl node info <id>` | Show node details |
+| `cortexctl node enable <id>` | Enable a node |
+| `cortexctl node disable <id>` | Disable a node |
+| `cortexctl task list` | List tasks |
+| `cortexctl task submit` | Submit a task |
+| `cortexctl task cancel <id>` | Cancel a task |
+| `cortexctl model list` | List available models |
+| `cortexctl provider list` | List providers |
+| `cortexctl provider test <id>` | Test provider |
+| `cortexctl storage list` | List storage locations |
+| `cortexctl profile list` | List profiles |
+| `cortexctl profile apply <name>` | Apply a profile |
+| `cortexctl event list` | List recent events |
+| `cortexctl config show` | Show configuration |
+| `cortexctl config set <key> <value>` | Set configuration |
+| `cortexctl logs` | Show recent logs |
 
 ## Documentation
 
@@ -105,7 +105,7 @@ hermesctl status --controller http://localhost:8000
 pytest
 
 # Run with coverage
-pytest --cov=hermesmesh --cov-report=html
+pytest --cov=cortexmesh --cov-report=html
 
 # Run specific tests
 pytest tests/test_scheduler.py

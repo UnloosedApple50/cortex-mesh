@@ -1,6 +1,6 @@
-# HermesMesh Agent
+# CortexMesh Agent
 
-The HermesMesh Agent runs on each node in the cluster. It detects hardware capabilities, registers with the controller, and maintains a heartbeat connection.
+The CortexMesh Agent runs on each node in the cluster. It detects hardware capabilities, registers with the controller, and maintains a heartbeat connection.
 
 ## Responsibilities
 
@@ -12,7 +12,7 @@ The HermesMesh Agent runs on each node in the cluster. It detects hardware capab
 ## Starting the Agent
 
 ```bash
-hermesctl agent --controller http://localhost:8000 --token <token> --name my-node
+cortexctl agent --controller http://localhost:8000 --token <token> --name my-node
 ```
 
 ## Configuration

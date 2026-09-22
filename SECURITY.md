@@ -8,9 +8,9 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in HermesMesh, please report it privately:
+If you discover a security vulnerability in CortexMesh, please report it privately:
 
-1. **Email**: security@hermesmesh.dev
+1. **Email**: security@cortexmesh.dev
 2. **Do NOT** open a public GitHub issue
 3. Include detailed reproduction steps
 4. Allow 48 hours for initial response
@@ -35,7 +35,7 @@ safety check
 
 ## Security Best Practices
 
-When deploying HermesMesh:
+When deploying CortexMesh:
 
 1. Always use TLS in production
 2. Use strong API keys

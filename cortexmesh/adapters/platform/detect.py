@@ -1,5 +1,5 @@
 """
-HermesMesh — Platform detection and hardware adapters.
+CortexMesh — Platform detection and hardware adapters.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import shutil
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple
 
-from hermesmesh.models import (
+from cortexmesh.models import (
     Architecture, CPUCapability, GPUCapability, GPUVendor,
     MemoryCapability, NetworkCapability, Platform, StorageCapability,
 )

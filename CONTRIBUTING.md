@@ -1,11 +1,11 @@
-# Contributing to HermesMesh
+# Contributing to CortexMesh
 
 Thank you for your interest in contributing! This document outlines how to get started.
 
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/hermesmesh.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/cortexmesh.git`
 3. Create a virtual environment: `python -m venv venv && source venv/bin/activate`
 4. Install dependencies: `pip install -e ".[dev]"`
 
@@ -14,7 +14,7 @@ Thank you for your interest in contributing! This document outlines how to get s
 1. Create a feature branch: `git checkout -b feature/my-feature`
 2. Make your changes
 3. Run tests: `pytest`
-4. Run linters: `ruff check hermesmesh tests && black --check hermesmesh tests`
+4. Run linters: `ruff check cortexmesh tests && black --check cortexmesh tests`
 5. Commit: `git commit -m "Add my feature"`
 6. Push: `git push origin feature/my-feature`
 7. Open a Pull Request
@@ -37,7 +37,7 @@ Thank you for your interest in contributing! This document outlines how to get s
 pytest
 
 # Run with coverage
-pytest --cov=hermesmesh --cov-report=html
+pytest --cov=cortexmesh --cov-report=html
 
 # Run specific test file
 pytest tests/test_scheduler.py

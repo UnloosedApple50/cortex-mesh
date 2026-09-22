@@ -1,5 +1,5 @@
 """
-HermesMesh — FastAPI Controller API with profiles, policies, and leases.
+CortexMesh — FastAPI Controller API with profiles, policies, and leases.
 """
 
 from __future__ import annotations
@@ -11,15 +11,15 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from hermesmesh.core.leases import LeaseManager, LeaseState
-from hermesmesh.core.policies import PolicyEngine, PolicyRule, PolicyType, PolicyAction
-from hermesmesh.core.profiles import ProfileManager, ResourceProfile
-from hermesmesh.database import (
+from cortexmesh.core.leases import LeaseManager, LeaseState
+from cortexmesh.core.policies import PolicyEngine, PolicyRule, PolicyType, PolicyAction
+from cortexmesh.core.profiles import ProfileManager, ResourceProfile
+from cortexmesh.database import (
     AuditLogModel, EnrollmentTokenModel, EventModel, NodeModel,
     PolicyModel, ProviderModel, ResourceLeaseModel, StorageLocationModel,
     TaskModel, async_session, init_db,
 )
-from hermesmesh.models import (
+from cortexmesh.models import (
     EnrollmentToken, ErrorResponse, Event, EventType,
     HealthResponse, NodeRegisterRequest, NodeResponse, NodeRole,
     NodeState, ProviderCreate, ProviderResponse, ResourceLimit,
@@ -28,7 +28,7 @@ from hermesmesh.models import (
 )
 
 app = FastAPI(
-    title="HermesMesh",
+    title="CortexMesh",
     description="Universal Platform for Multi-Machine Orchestration",
     version="0.1.0",
 )

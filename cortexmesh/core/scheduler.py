@@ -1,5 +1,5 @@
 """
-HermesMesh — Core scheduler with capability-based scoring.
+CortexMesh — Core scheduler with capability-based scoring.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
-from hermesmesh.models import (
+from cortexmesh.models import (
     NodeCapabilities, NodeResponse, NodeRole, NodeState,
     TaskPriority, TaskRequirements, TaskState, TaskSubmit,
 )

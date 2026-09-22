@@ -1,5 +1,5 @@
 """
-HermesMesh — SQLAlchemy database layer.
+CortexMesh — SQLAlchemy database layer.
 
 Uses SQLite by default, PostgreSQL-ready via DATABASE_URL.
 """
@@ -20,7 +20,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "sqlite+aiosqlite:///./hermesmesh.db"
+    "sqlite+aiosqlite:///./cortexmesh.db"
 )
 
 engine = create_async_engine(DATABASE_URL, echo=False)

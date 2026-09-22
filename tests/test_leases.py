@@ -1,11 +1,11 @@
 """
-Tests for HermesMesh resource lease system.
+Tests for CortexMesh resource lease system.
 """
 
 import pytest
 from datetime import datetime, timezone, timedelta
 
-from hermesmesh.core.leases import (
+from cortexmesh.core.leases import (
     LeaseManager, LeaseState, ResourceLease, NodeResourceUsage
 )
 

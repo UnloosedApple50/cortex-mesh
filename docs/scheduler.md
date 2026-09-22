@@ -1,4 +1,4 @@
-# HermesMesh Scheduler
+# CortexMesh Scheduler
 
 The scheduler is responsible for placing tasks on the best available node in the cluster.
 
@@ -67,7 +67,7 @@ When a task is scheduled, a resource lease is created to prevent overcommitment.
 ## Configuration
 
 ```python
-from hermesmesh.core.scheduler import CapabilityScorer
+from cortexmesh.core.scheduler import CapabilityScorer
 
 scorer = CapabilityScorer(
     weight_cpu=1.0,

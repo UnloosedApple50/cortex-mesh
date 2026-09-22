@@ -1,5 +1,5 @@
 """
-HermesMesh — GPU Adapter base class.
+CortexMesh — GPU Adapter base class.
 
 Each GPU vendor adapter implements detect(), metrics(), and capabilities().
 """

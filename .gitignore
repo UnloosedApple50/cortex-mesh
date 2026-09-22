@@ -45,8 +45,8 @@ coverage.xml
 *.log
 logs/
 
-# HermesMesh specific
-hermesmesh.db
-hermesmesh.db-journal
+# CortexMesh specific
+cortexmesh.db
+cortexmesh.db-journal
 controller_state/
 agent_state/

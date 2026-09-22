@@ -1,12 +1,12 @@
 """
-Tests for HermesMesh API.
+Tests for CortexMesh API.
 """
 
 import pytest
 from httpx import AsyncClient, ASGITransport
 
-from hermesmesh.server.api import app
-from hermesmesh.database import init_db, engine, Base
+from cortexmesh.server.api import app
+from cortexmesh.database import init_db, engine, Base
 
 
 @pytest.fixture(autouse=True)

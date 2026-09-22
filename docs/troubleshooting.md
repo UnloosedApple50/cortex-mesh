@@ -1,4 +1,4 @@
-# HermesMesh Troubleshooting
+# CortexMesh Troubleshooting
 
 ## Common Issues
 
@@ -9,10 +9,10 @@
 lsof -i :8000
 
 # Check database permissions
-ls -la hermesmesh.db
+ls -la cortexmesh.db
 
 # Run with debug logging
-hermesctl controller --port 8001
+cortexctl controller --port 8001
 ```
 
 ### Agent can't connect to controller
@@ -33,26 +33,26 @@ curl -X POST http://localhost:8000/api/v1/enrollment/create
 
 ```bash
 # Check agent logs
-journalctl -u hermesmesh-agent -f
+journalctl -u cortexmesh-agent -f
 
 # Verify heartbeat interval
-hermesctl agent --controller http://localhost:8000 --token <token>
+cortexctl agent --controller http://localhost:8000 --token <token>
 
 # Check controller logs
-hermesctl logs --lines 100
+cortexctl logs --lines 100
 ```
 
 ### Task stuck in QUEUED state
 
 ```bash
 # Check if any nodes are online
-hermesctl node list --controller http://localhost:8000
+cortexctl node list --controller http://localhost:8000
 
 # Check node capabilities match task requirements
-hermesctl node info <node_id> --controller http://localhost:8000
+cortexctl node info <node_id> --controller http://localhost:8000
 
 # Check scheduler explanation
-hermesctl task info <task_id> --controller http://localhost:8000
+cortexctl task info <task_id> --controller http://localhost:8000
 ```
 
 ### GPU not detected
@@ -76,11 +76,11 @@ system_profiler SPDisplaysDataType
 
 ```bash
 # Reset database (WARNING: destroys all data)
-rm hermesmesh.db
-hermesctl controller
+rm cortexmesh.db
+cortexctl controller
 
 # Check database integrity
-sqlite3 hermesmesh.db "PRAGMA integrity_check;"
+sqlite3 cortexmesh.db "PRAGMA integrity_check;"
 ```
 
 ## Debug Mode
@@ -92,16 +92,16 @@ Enable verbose logging:
 export HERMESMESH_LOG_LEVEL=debug
 
 # Start controller
-hermesctl controller
+cortexctl controller
 ```
 
 ## Getting Help
 
 1. Check the [FAQ](faq.md)
-2. Search [GitHub Issues](https://github.com/hermesmesh/hermesmesh/issues)
+2. Search [GitHub Issues](https://github.com/cortexmesh/cortexmesh/issues)
 3. Join the community Discord
 4. Open a new issue with:
-   - HermesMesh version (`hermesctl version`)
+   - CortexMesh version (`cortexctl version`)
    - Python version (`python --version`)
    - OS and architecture
    - Steps to reproduce

@@ -1,6 +1,6 @@
-# HermesMesh Controller
+# CortexMesh Controller
 
-The Controller is the central brain of a HermesMesh cluster. It provides the API, manages the database, runs the scheduler, and coordinates all nodes.
+The Controller is the central brain of a CortexMesh cluster. It provides the API, manages the database, runs the scheduler, and coordinates all nodes.
 
 ## Components
 
@@ -13,14 +13,14 @@ The Controller is the central brain of a HermesMesh cluster. It provides the API
 ## Starting the Controller
 
 ```bash
-hermesctl controller --host 0.0.0.0 --port 8000
+cortexctl controller --host 0.0.0.0 --port 8000
 ```
 
 Or via Python:
 
 ```python
 import uvicorn
-uvicorn.run("hermesmesh.server.api:app", host="0.0.0.0", port=8000)
+uvicorn.run("cortexmesh.server.api:app", host="0.0.0.0", port=8000)
 ```
 
 ## Configuration
@@ -29,7 +29,7 @@ uvicorn.run("hermesmesh.server.api:app", host="0.0.0.0", port=8000)
 |--------|---------|-------------|
 | `--host` | `0.0.0.0` | Bind address |
 | `--port` | `8000` | Bind port |
-| `--db` | `sqlite+aiosqlite:///./hermesmesh.db` | Database URL |
+| `--db` | `sqlite+aiosqlite:///./cortexmesh.db` | Database URL |
 
 ### Environment Variables
 
@@ -69,7 +69,7 @@ The scheduler uses capability-based scoring to place tasks on the best available
 
 ```bash
 # Using gunicorn with uvicorn workers
-gunicorn hermesmesh.server.api:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+gunicorn cortexmesh.server.api:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 
 # Behind nginx reverse proxy
 # See docs/deployment.md for full guide
@@ -82,8 +82,8 @@ gunicorn hermesmesh.server.api:app -w 4 -k uvicorn.workers.UvicornWorker --bind 
 curl http://localhost:8000/api/v1/health
 
 # Cluster status
-hermesctl status --controller http://localhost:8000
+cortexctl status --controller http://localhost:8000
 
 # Recent events
-hermesctl event list --controller http://localhost:8000
+cortexctl event list --controller http://localhost:8000
 ```

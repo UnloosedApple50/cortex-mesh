@@ -1,4 +1,4 @@
-# HermesMesh Installation
+# CortexMesh Installation
 
 ## Requirements
 
@@ -10,28 +10,28 @@
 ## Install from PyPI
 
 ```bash
-pip install hermesmesh
+pip install cortexmesh
 ```
 
 ## Install from Source
 
 ```bash
-git clone https://github.com/hermesmesh/hermesmesh.git
-cd hermesmesh
+git clone https://github.com/cortexmesh/cortexmesh.git
+cd cortexmesh
 pip install -e ".[dev]"
 ```
 
 ## Verify Installation
 
 ```bash
-hermesctl version
-hermesctl doctor
+cortexctl version
+cortexctl doctor
 ```
 
 ## Start the Controller
 
 ```bash
-hermesctl controller --host 0.0.0.0 --port 8000
+cortexctl controller --host 0.0.0.0 --port 8000
 ```
 
 ## Start an Agent
@@ -39,7 +39,7 @@ hermesctl controller --host 0.0.0.0 --port 8000
 On each node you want to add to the cluster:
 
 ```bash
-hermesctl agent --controller http://localhost:8000 --token <enrollment_token>
+cortexctl agent --controller http://localhost:8000 --token <enrollment_token>
 ```
 
 ## Generate Enrollment Token
@@ -51,8 +51,8 @@ curl -X POST http://localhost:8000/api/v1/enrollment/create
 ## Docker (Optional)
 
 ```bash
-docker build -t hermesmesh .
-docker run -p 8000:8000 hermesmesh controller
+docker build -t cortexmesh .
+docker run -p 8000:8000 cortexmesh controller
 ```
 
 ## Platform-Specific Notes
