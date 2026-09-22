@@ -1,0 +1,40 @@
+{
+  "cli_commands": [
+    "controller",
+    "agent",
+    "doctor",
+    "version",
+    "status",
+    "node list",
+    "node info",
+    "node enable",
+    "node disable",
+    "task list",
+    "task submit",
+    "task cancel",
+    "model list",
+    "provider list",
+    "provider test",
+    "storage list",
+    "profile list",
+    "profile apply",
+    "event list",
+    "config show",
+    "config set",
+    "logs"
+  ],
+  "total_tests": 173,
+  "tests_passing": 173,
+  "docs_created": [
+    "docs/installation.md",
+    "docs/agent.md",
+    "docs/controller.md",
+    "docs/scheduler.md",
+    "docs/security.md",
+    "docs/troubleshooting.md",
+    "docs/api.md",
+    "docs/development.md",
+    "docs/architecture.md"
+  ],
+  "ci_created": true
+}
