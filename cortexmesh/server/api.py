@@ -8,8 +8,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 
+import os
+
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from cortexmesh.core.leases import LeaseManager, LeaseState
 from cortexmesh.core.policies import PolicyEngine, PolicyRule, PolicyType, PolicyAction
@@ -640,3 +644,21 @@ async def create_enrollment_token(expires_hours: int = 24):
             token=token.token,
             expires_at=token.expires_at,
         )
+
+
+# ── Static Web Panel ─────────────────────────────────────────────
+
+WEB_DIST = os.path.join(os.path.dirname(__file__), "..", "..", "apps", "web", "dist")
+if os.path.isdir(WEB_DIST):
+    app.mount("/assets", StaticFiles(directory=os.path.join(WEB_DIST, "assets")), name="assets")
+
+    @app.get("/")
+    async def serve_web():
+        return FileResponse(os.path.join(WEB_DIST, "index.html"))
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = os.path.join(WEB_DIST, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(WEB_DIST, "index.html"))
