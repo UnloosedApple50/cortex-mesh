@@ -24,7 +24,7 @@ A registered machine with:
 
 A capability is a **fact** about a node:
 - CPU: 16 threads, x86_64
-- GPU: NVIDIA RTX 4060, 8GB VRAM
+- GPU: NVIDIA NVIDIA GPU, 8GB VRAM
 - Storage: 1TB NVMe
 - Provider: Ollama installed
 

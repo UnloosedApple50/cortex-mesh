@@ -18,7 +18,7 @@ class TestGPUCapabilities:
         caps = GPUCapabilities(
             index=0,
             vendor="nvidia",
-            model="RTX 4060",
+            model="NVIDIA GPU",
             vram_bytes=8 * 1024**3,
         )
         assert caps.index == 0
@@ -37,7 +37,7 @@ class TestGPUMetrics:
     def test_create_metrics(self):
         m = GPUMetrics(
             index=0,
-            model="RTX 4060",
+            model="NVIDIA GPU",
             gpu_usage_percent=45.5,
             memory_used_bytes=4 * 1024**3,
             memory_total_bytes=8 * 1024**3,
@@ -87,7 +87,7 @@ class TestNvidiaGPUAdapter:
         adapter._nvml = None
         adapter._nvml_available = False
         
-        mock_output = "0, NVIDIA GeForce RTX 4060, 8192, GPU-abc123, 12345, 0000:01:00.0\n"
+        mock_output = "0, NVIDIA GeForce NVIDIA GPU, 8192, GPU-abc123, 12345, 0000:01:00.0\n"
         with patch("cortexmesh.adapters.gpu.base.subprocess.run") as mock_run:
             mock_result = MagicMock()
             mock_result.returncode = 0
@@ -96,7 +96,7 @@ class TestNvidiaGPUAdapter:
             
             gpus = adapter._detect_smi()
             assert len(gpus) == 1
-            assert gpus[0].model == "NVIDIA GeForce RTX 4060"
+            assert gpus[0].model == "NVIDIA GeForce NVIDIA GPU"
             assert gpus[0].vram_bytes == 8192 * 1024 * 1024
             assert gpus[0].uuid == "GPU-abc123"
 
@@ -108,7 +108,7 @@ class TestNvidiaGPUAdapter:
         adapter._nvml = None
         adapter._nvml_available = False
         
-        mock_output = "0, NVIDIA GeForce RTX 4060, 45.5, 4096, 8192, 4096, 65.0, 120.0, 70, 2505, 7000\n"
+        mock_output = "0, NVIDIA GeForce NVIDIA GPU, 45.5, 4096, 8192, 4096, 65.0, 120.0, 70, 2505, 7000\n"
         with patch("cortexmesh.adapters.gpu.base.subprocess.run") as mock_run:
             mock_result = MagicMock()
             mock_result.returncode = 0

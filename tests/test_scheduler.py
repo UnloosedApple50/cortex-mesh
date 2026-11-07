@@ -38,7 +38,7 @@ def sample_node():
             gpus=[
                 GPUCapability(
                     vendor=GPUVendor.NVIDIA,
-                    model="RTX 4060",
+                    model="NVIDIA GPU",
                     vram_bytes=8 * 1024**3,
                     monitoring_supported=True,
                 )

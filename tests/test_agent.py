@@ -165,7 +165,7 @@ class TestAgentEdgeCases:
         urls = [
             "http://localhost:8000",
             "https://controller.example.com",
-            "http://192.168.1.100:8080",
+            "http://10.0.0.100:8080",
         ]
         for url in urls:
             agent = Agent(

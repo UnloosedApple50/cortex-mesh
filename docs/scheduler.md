@@ -50,7 +50,7 @@ A node is eligible if:
 Given a task requiring 4 CPU threads, 8GB RAM, and 6GB VRAM:
 
 ```
-Node A: 16 threads, 32GB RAM, RTX 4060 (8GB VRAM)
+Node A: 16 threads, 32GB RAM, NVIDIA GPU (8GB VRAM)
   CPU score: min(1.0, 16/8) * 1.0 = 1.0
   RAM score: min(1.0, 32/16) * 1.5 = 1.5
   VRAM score: min(1.0, 8/12) * 2.0 = 1.33
@@ -90,7 +90,7 @@ Score: 5.83
 Reasons:
   - CPU: 16 threads available
   - RAM: 32.0GB available
-  - GPU: RTX 4060 (8.0GB VRAM)
+  - GPU: NVIDIA GPU (8.0GB VRAM)
   - Model 'llama3' already cached
   - Load: 25%
 
