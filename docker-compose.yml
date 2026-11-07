@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # CortexMesh Controller
+  # ─────────────────────────────────────────────────────────────
+  cortexmesh:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cortexmesh-controller
+    ports:
+      - "8000:8000"
+    volumes:
+      - cortexmesh-data:/app/data
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/cortexmesh.db
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - cortexmesh-network
+
+  # ─────────────────────────────────────────────────────────────
+  # Frontend Web (React + Vite)
+  # ─────────────────────────────────────────────────────────────
+  cortexmesh-web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: cortexmesh-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - cortexmesh
+    restart: unless-stopped
+    networks:
+      - cortexmesh-network
+
+volumes:
+  cortexmesh-data:
+    driver: local
+
+networks:
+  cortexmesh-network:
+    driver: bridge
